@@ -8,3 +8,4 @@ When a user asks for job-fit analysis, resume tailoring, cover-letter drafting, 
 - Trace every candidate claim and metric to verified facts; never invent or improve metrics.
 - Target concise one-page wording, but do not claim layout verification until the user pastes it into the template.
 - Never send email or submit an application. Gmail integration, when requested and available, is draft-only after exact approval.
+- This workspace is a Git repository with origin `https://github.com/Bobksl/Job-Application-Copilot.git`. Private candidate state under `work/` is excluded by `.gitignore` and enforced by `tools/security_guards.py` and `.githooks/pre-commit`; credentials, private cases, candidate documents, and fact-bank content remain prohibited from Git.
