@@ -5,11 +5,13 @@ import sys
 import unittest
 import shutil
 import uuid
+from copy import deepcopy
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "quality_gate.py"
+CASE_FIXTURE = ROOT / "tests" / "fixtures" / "application_case.json"
 
 
 def approval_hash(change_set):
@@ -52,16 +54,23 @@ class QualityGateTests(unittest.TestCase):
                 "last_verified": "2026-08-11"
             }]
         }
+        self.application_case = json.loads(CASE_FIXTURE.read_text(encoding="utf-8"))
 
     def tearDown(self):
         shutil.rmtree(self.directory, ignore_errors=True)
 
-    def run_gate(self, change_set, mode="prewrite"):
+    def run_gate(self, change_set, mode="prewrite", application_case=None):
         fact_path = write_json(self.directory, "facts.json", self.fact_bank)
         change_path = write_json(self.directory, "change.json", change_set)
+        command = [
+            sys.executable, str(SCRIPT), mode, "--fact-bank", str(fact_path),
+            "--change-set", str(change_path),
+        ]
+        if application_case is not None:
+            case_path = write_json(self.directory, "application_case.json", application_case)
+            command.extend(["--application-case", str(case_path)])
         return subprocess.run(
-            [sys.executable, str(SCRIPT), mode, "--fact-bank", str(fact_path),
-             "--change-set", str(change_path)],
+            command,
             capture_output=True, text=True, check=False,
         )
 
@@ -101,6 +110,23 @@ class QualityGateTests(unittest.TestCase):
         result = self.run_gate(self.valid_change_set())
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("not verified", result.stderr)
+
+    def test_vetoed_application_case_is_blocked_before_approval(self):
+        for gate_name in ("eligibility_gate", "language_gate"):
+            with self.subTest(gate_name=gate_name):
+                application_case = deepcopy(self.application_case)
+                application_case[gate_name] = "FAIL"
+                note_name = gate_name.replace("_gate", "_note")
+                application_case[note_name] = (
+                    "must be a citizen of X; source: synthetic fixture posting"
+                )
+                result = self.run_gate(
+                    self.valid_change_set(), application_case=application_case
+                )
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(gate_name, result.stderr)
+                self.assertIn("FAIL", result.stderr)
+                self.assertIn(application_case[note_name], result.stderr)
 
     def test_bracketed_placeholder_is_blocked(self):
         change = self.valid_change_set()

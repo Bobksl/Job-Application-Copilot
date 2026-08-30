@@ -9,7 +9,7 @@ Act as an independent, read-only critic. Do not repair text silently and do not 
 
 ## Draft Gate
 
-1. Validate the fact bank and change set against root schemas when structured artifacts exist.
+1. Validate the fact bank, application case, and change set against root schemas when structured artifacts exist. Confirm that the case ID matches the change set and block either pre-scoring gate when it is `FAIL`.
 2. Trace every candidate claim and metric to verified fact IDs allowed for that artifact; every percentage must exactly match a verified metric in its cited facts.
 3. Block unresolved square-bracket placeholders from final copy-ready text.
 4. Check direct human tone, active voice, repetition, and restrained ATS usage.
@@ -19,7 +19,7 @@ Act as an independent, read-only critic. Do not repair text silently and do not 
 When a structured change set is used, run:
 
 ```text
-python <plugin-root>/scripts/quality_gate.py prewrite --fact-bank <facts> --change-set <changes>
+python <plugin-root>/scripts/quality_gate.py prewrite --fact-bank <facts> --application-case <case> --change-set <changes>
 ```
 
 Only a clean pass may proceed to copy-ready handoff or Gmail authorization.

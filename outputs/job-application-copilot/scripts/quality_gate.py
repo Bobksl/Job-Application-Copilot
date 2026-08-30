@@ -81,9 +81,32 @@ def validate_schema(value: dict, schema_name: str) -> None:
         raise GateError(f"Schema validation failed: {details}")
 
 
-def validate_prewrite(fact_bank: dict, change_set: dict) -> None:
+def validate_case_gates(application_case: dict, change_set: dict) -> None:
+    validate_schema(application_case, "application_case.schema.json")
+    if application_case["case_id"] != change_set["case_id"]:
+        raise GateError("Application case does not match the change set case_id.")
+    for gate_name in ("eligibility_gate", "language_gate"):
+        if application_case.get(gate_name) == "FAIL":
+            note_name = gate_name.replace("_gate", "_note")
+            note = application_case.get(note_name)
+            if not note:
+                raise GateError(
+                    f"Application case {gate_name} is FAIL but {note_name} is missing; "
+                    "the verbatim posting quote and source are required."
+                )
+            raise GateError(
+                f"Application case {gate_name} is FAIL; a vetoed role cannot advance to "
+                f"approval. Trigger: {note}"
+            )
+
+
+def validate_prewrite(
+    fact_bank: dict, change_set: dict, application_case: dict | None = None
+) -> None:
     validate_schema(fact_bank, "fact_bank.schema.json")
     validate_schema(change_set, "change_set.schema.json")
+    if application_case is not None:
+        validate_case_gates(application_case, change_set)
 
     if change_set["status"] not in {"approved", "applied", "final"}:
         raise GateError("Change set is not approved for writing.")
@@ -130,8 +153,10 @@ def validate_prewrite(fact_bank: dict, change_set: dict) -> None:
         raise GateError("No approval matches the exact change-set ID, target, and wording.")
 
 
-def validate_final(fact_bank: dict, change_set: dict) -> None:
-    validate_prewrite(fact_bank, change_set)
+def validate_final(
+    fact_bank: dict, change_set: dict, application_case: dict | None = None
+) -> None:
+    validate_prewrite(fact_bank, change_set, application_case)
     if change_set["status"] != "final":
         raise GateError("Finalization requires change-set status 'final'.")
     qa = change_set["qa"]
@@ -154,11 +179,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("mode", choices=["prewrite", "final"])
     parser.add_argument("--fact-bank", required=True, type=Path)
     parser.add_argument("--change-set", required=True, type=Path)
+    parser.add_argument("--application-case", type=Path)
     args = parser.parse_args(argv)
     try:
         facts = load_json(args.fact_bank)
         changes = load_json(args.change_set)
-        (validate_prewrite if args.mode == "prewrite" else validate_final)(facts, changes)
+        application_case = load_json(args.application_case) if args.application_case else None
+        (validate_prewrite if args.mode == "prewrite" else validate_final)(
+            facts, changes, application_case
+        )
     except GateError as exc:
         print(f"BLOCKED: {exc}", file=sys.stderr)
         return 1

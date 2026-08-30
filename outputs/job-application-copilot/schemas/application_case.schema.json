@@ -43,6 +43,10 @@
     },
     "selected_track": {"type": ["string", "null"], "enum": ["quant_cv", "fundamental_resume", null]},
     "fit_score": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+    "eligibility_gate": {"enum": ["PASS", "FAIL", "UNVERIFIED"]},
+    "eligibility_note": {"type": "string", "minLength": 1, "maxLength": 5000},
+    "language_gate": {"enum": ["PASS", "FLAG", "FAIL"]},
+    "language_note": {"type": "string", "minLength": 1, "maxLength": 5000},
     "score_weights": {
       "type": "object", "additionalProperties": false,
       "required": ["core_responsibilities", "hard_skills", "domain_experience", "soft_skills", "ats_terms"],

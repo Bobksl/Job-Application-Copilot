@@ -1,0 +1,30 @@
+[
+  {
+    "name": "citizenship_requirement",
+    "posting_quote": "must be a citizen of X",
+    "table": "eligibility",
+    "row_marker": "citizenship or permanent-residency requirement",
+    "expected": "FAIL"
+  },
+  {
+    "name": "citizenship_silence",
+    "posting_quote": "The posting is silent on citizenship or residency.",
+    "table": "eligibility",
+    "row_marker": "Silent",
+    "expected": "UNVERIFIED"
+  },
+  {
+    "name": "undeclared_required_language",
+    "posting_quote": "Fluent Japanese required.",
+    "table": "language",
+    "row_marker": "not declared at all",
+    "expected": "FAIL"
+  },
+  {
+    "name": "language_bar_above_declared_level",
+    "posting_quote": "Business-level Mandarin required.",
+    "table": "language",
+    "row_marker": "plausibly **higher**",
+    "expected": "FLAG"
+  }
+]
