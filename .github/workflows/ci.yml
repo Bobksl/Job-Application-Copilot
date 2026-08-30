@@ -59,7 +59,7 @@ jobs:
         run: |
           if [ -d outputs/job-application-copilot/tests ]; then
             cd outputs/job-application-copilot
-            python -m unittest discover -s tests -t . -v
+            python -m unittest discover -s tests -v
           else
             echo "::warning::No test directory found at outputs/job-application-copilot/tests"
           fi
