@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "application_case.schema.json",
+  "title": "Isolated job application case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "case_id", "company", "role", "created_at", "status", "jd",
+    "documents", "selected_track", "fit_score", "score_weights", "research_sources",
+    "change_sets", "approvals"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "case_id": {"type": "string", "pattern": "^CASE-[A-Z0-9-]+$"},
+    "company": {"type": "string", "minLength": 1, "maxLength": 200},
+    "role": {"type": "string", "minLength": 1, "maxLength": 300},
+    "created_at": {"type": "string", "format": "date-time"},
+    "status": {
+      "enum": [
+        "intake", "fact_bank_pending", "diagnostic_pending", "redline_pending",
+        "approval_pending", "resume_updated", "cover_letter_pending", "email_pending",
+        "completed", "blocked"
+      ]
+    },
+    "jd": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_type", "source", "captured_at", "sha256"],
+      "properties": {
+        "source_type": {"enum": ["pending", "pasted", "url"]},
+        "source": {"type": ["string", "null"], "maxLength": 200000},
+        "captured_at": {"type": ["string", "null"], "format": "date-time"},
+        "sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "documents": {
+      "type": "object", "additionalProperties": false,
+      "required": ["quant_cv", "fundamental_resume", "cover_letter"],
+      "properties": {
+        "quant_cv": {"$ref": "#/$defs/document"},
+        "fundamental_resume": {"$ref": "#/$defs/document"},
+        "cover_letter": {"$ref": "#/$defs/document"}
+      }
+    },
+    "selected_track": {"type": ["string", "null"], "enum": ["quant_cv", "fundamental_resume", null]},
+    "fit_score": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+    "score_weights": {
+      "type": "object", "additionalProperties": false,
+      "required": ["core_responsibilities", "hard_skills", "domain_experience", "soft_skills", "ats_terms"],
+      "properties": {
+        "core_responsibilities": {"const": 35},
+        "hard_skills": {"const": 30},
+        "domain_experience": {"const": 20},
+        "soft_skills": {"const": 10},
+        "ats_terms": {"const": 5}
+      }
+    },
+    "research_sources": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["url", "title", "published_at", "retrieved_at", "source_class", "claim_type"],
+        "properties": {
+          "url": {"type": "string", "format": "uri", "maxLength": 2000},
+          "title": {"type": "string", "minLength": 1, "maxLength": 500},
+          "published_at": {"type": ["string", "null"], "format": "date"},
+          "retrieved_at": {"type": "string", "format": "date-time"},
+          "source_class": {"enum": ["job_description", "official", "reputable_press"]},
+          "claim_type": {"enum": ["reported_fact", "inference"]}
+        }
+      }
+    },
+    "change_sets": {"type": "array", "items": {"type": "string", "maxLength": 1000}},
+    "approvals": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["scope", "approved_by", "approved_at"],
+        "properties": {
+          "scope": {"type": "string", "minLength": 1, "maxLength": 300},
+          "approved_by": {"type": "string", "minLength": 1, "maxLength": 100},
+          "approved_at": {"type": "string", "format": "date-time"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "document": {
+      "type": "object", "additionalProperties": false,
+      "required": ["document_id", "url", "baseline_revision_id", "baseline_page_count", "style"],
+      "properties": {
+        "document_id": {"type": ["string", "null"], "maxLength": 200},
+        "url": {"type": ["string", "null"], "format": "uri", "maxLength": 2000},
+        "baseline_revision_id": {"type": ["string", "null"], "maxLength": 500},
+        "baseline_page_count": {"type": ["integer", "null"], "minimum": 1},
+        "style": {
+          "type": "object", "additionalProperties": false,
+          "required": ["font_family", "bullet_font_size_pt", "line_spacing", "page_limit", "preserve_margins"],
+          "properties": {
+            "font_family": {"const": "Times New Roman"},
+            "bullet_font_size_pt": {"const": 11},
+            "line_spacing": {"const": "single"},
+            "page_limit": {"const": 1},
+            "preserve_margins": {"const": true}
+          }
+        }
+      }
+    }
+  }
+}

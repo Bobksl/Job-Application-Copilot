@@ -1,0 +1,65 @@
+#!/bin/sh
+# Job Application Copilot — pre-commit guard.
+#
+# Install once:  git config core.hooksPath .githooks
+# (On Windows this works in Git Bash, PowerShell and cmd — git runs the hook
+# through its own bundled sh, so no shebang gymnastics are needed.)
+#
+# Two checks, both cheap enough to run on every commit:
+#
+#   1. tools/security_guards.py — the full allowlist check.
+#   2. A staged-path check — refuses a commit that stages anything under a
+#      private path even if .gitignore was edited in the same commit.
+#
+# The second check exists because .gitignore and the staging area are evaluated
+# independently: `git add -f` and an ignore rule edited in the same commit both
+# get files past the ignore rules silently. This is the last gate before the
+# fact bank ends up in a public repository, so it refuses rather than warns.
+#
+# Bypass (deliberately awkward — you should have to mean it):
+#   git commit --no-verify
+
+set -e
+
+fail=0
+
+# ---- 1. staged-path check -------------------------------------------------
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+
+for path in $staged; do
+  case "$path" in
+    work/*|*/job-application-copilot-data/*|documents/*|secrets/*)
+      echo "BLOCKED: $path is under a private path and must never be committed."
+      fail=1
+      ;;
+    *fact_bank.json|*.env|*credentials.json|*token.json|*notion_sync.json|*client_secret*.json|*service_account*.json)
+      echo "BLOCKED: $path holds candidate facts or credentials."
+      fail=1
+      ;;
+    *.xlsx|*.xls)
+      echo "BLOCKED: $path — the company longlist stays out of Git."
+      fail=1
+      ;;
+  esac
+done
+
+if [ "$fail" = "1" ]; then
+  echo ""
+  echo "Nothing was committed. To unstage: git restore --staged <path>"
+  echo "If a file was tracked before the ignore rules existed:"
+  echo "  git rm --cached <path>"
+  exit 1
+fi
+
+# ---- 2. full guard --------------------------------------------------------
+if [ -f tools/security_guards.py ]; then
+  python tools/security_guards.py || python3 tools/security_guards.py || {
+    echo ""
+    echo "security_guards failed. Fix the findings above, or if the change is"
+    echo "intentional, update the allowlist in tools/security_guards.py in this"
+    echo "same commit so the widening is visible in the diff."
+    exit 1
+  }
+fi
+
+exit 0

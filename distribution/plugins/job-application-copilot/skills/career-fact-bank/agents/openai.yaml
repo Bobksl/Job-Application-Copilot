@@ -1,0 +1,4 @@
+interface:
+  display_name: "Career Fact Bank"
+  short_description: "Verify reusable career facts and metrics"
+  default_prompt: "Use $career-fact-bank to verify my career history one fact at a time."

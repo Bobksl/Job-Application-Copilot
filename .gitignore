@@ -1,0 +1,108 @@
+# Job Application Copilot — workspace .gitignore
+# Place at the workspace root, save as ".gitignore" (no leading word).
+#
+# Design rule this file enforces:
+#   Code, schemas, skills and tests are versioned.
+#   Candidate facts, cases, credentials and generated documents are NOT.
+#
+# Order matters: a later "!pattern" re-includes something an earlier rule
+# excluded. tools/security_guards.py checks that every rule below is still
+# present and that no unapproved negation has been added.
+
+# ---------------------------------------------------------------
+# 1. Private candidate state — the fact bank and every case folder
+# ---------------------------------------------------------------
+# Ignored wholesale. Nothing under work/ is ever versioned.
+work/
+**/job-application-copilot-data/
+**/fact_bank.json
+**/fact_bank.*.json
+
+# Case artifacts, wherever they land
+**/cases/**
+**/change_sets/**
+**/authorizations/**
+**/approvals/**
+
+# ---------------------------------------------------------------
+# 2. Application documents and exports
+# ---------------------------------------------------------------
+# Résumé and cover-letter drafts, paste-back copies, and PDF exports carry
+# the candidate's full history even when the filename looks harmless.
+outputs/showcase/
+**/resume_*.md
+**/resume_*.txt
+**/resume_*.docx
+**/resume_*.pdf
+**/cover_letter_*.md
+**/cover_letter_*.txt
+**/cover_letter_*.docx
+**/cover_letter_*.pdf
+**/*_paste_back.*
+**/*_export.pdf
+
+# Extracted PDF text layers (ATS verification output) — full document text
+**/*.ats.txt
+
+# Google Docs / Drive payloads and historical repair artifacts
+**/gdocs_payloads/**
+**/*_change_set_*.json
+**/*_docs_export_*.json
+
+# ---------------------------------------------------------------
+# 3. Credentials and connector state
+# ---------------------------------------------------------------
+.env
+.env.*
+**/credentials.json
+**/client_secret*.json
+**/token.json
+**/*_oauth*.json
+**/service_account*.json
+secrets/
+**/notion_sync.json
+**/gmail_draft_*.json
+
+# ---------------------------------------------------------------
+# 4. Personal source documents
+# ---------------------------------------------------------------
+documents/
+**/transcripts/**
+**/diplomas/**
+**/references/**
+*_BehavioralReport.pdf
+linkedin_Profile.pdf
+
+# ---------------------------------------------------------------
+# 5. Longlist and tracker data
+# ---------------------------------------------------------------
+*.xlsx
+*.xls
+**/longlist*.csv
+**/tracker*.csv
+
+# ---------------------------------------------------------------
+# 6. Build, cache, and editor noise
+# ---------------------------------------------------------------
+tmp/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+venv/
+.venv/
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+
+# ---------------------------------------------------------------
+# 7. Approved re-inclusions
+# ---------------------------------------------------------------
+# Every negation below must also appear in security_guards.py's
+# ALLOWED_IGNORE_NEGATIONS. Adding one anywhere else fails the guard.
+!schemas/*.json
+!**/schemas/*.json
+!tests/fixtures/**
+!**/tests/fixtures/**

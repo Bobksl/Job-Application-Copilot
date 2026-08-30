@@ -1,0 +1,4 @@
+interface:
+  display_name: "Job Fit Diagnostic"
+  short_description: "Map a job description to verified evidence"
+  default_prompt: "Use $job-fit-diagnostic to assess this role against my verified facts."

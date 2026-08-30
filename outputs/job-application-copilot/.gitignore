@@ -1,0 +1,19 @@
+# Private candidate and application data
+private/
+data/
+cases/
+*.pdf
+*.docx
+*.xlsx
+
+# Credentials and local environment
+.env
+.env.*
+*.pem
+*.key
+
+# Python/test artifacts
+__pycache__/
+*.py[cod]
+.test-tmp/
+

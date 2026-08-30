@@ -1,0 +1,4 @@
+interface:
+  display_name: "Application Quality Gate"
+  short_description: "Block unsupported or unsafe application text"
+  default_prompt: "Use $application-quality-gate to audit these application materials before final handoff."

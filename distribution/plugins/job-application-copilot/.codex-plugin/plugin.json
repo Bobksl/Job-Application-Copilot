@@ -1,0 +1,20 @@
+{
+  "name": "job-application-copilot",
+  "version": "0.2.0+codex.20260813145149",
+  "description": "Governed, fact-grounded job application workflow with copy-ready materials and optional draft-only email integration.",
+  "author": {
+    "name": "Private local user"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Job Application Copilot",
+    "shortDescription": "Build fact-checked, copy-ready applications.",
+    "longDescription": "Runs isolated job application cases, verifies every claim against an approved career fact bank, and returns polished resume redlines and cover letters for manual paste-back. Gmail remains draft-only.",
+    "developerName": "Private local user",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive"
+    ],
+    "defaultPrompt": "Start a quality-first job application case from this JD."
+  }
+}

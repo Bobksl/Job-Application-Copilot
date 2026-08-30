@@ -1,0 +1,88 @@
+# CI for the Job Application Copilot.
+#
+# Three jobs, in increasing cost order:
+#
+#   1. security-guards  — the private-data and hook-integrity allowlists.
+#      This is the job that matters most. It fails a PR that weakens the
+#      .gitignore rules keeping the fact bank out of version control, adds an
+#      un-allowlisted hook event, deletes a deny rule from pre_tool_use.py, or
+#      commits a file under a private path.
+#
+#   2. unit-tests       — the existing regression suite.
+#
+#   3. private-data-scan — a coarse content scan for candidate data that slipped
+#      past the path rules (a résumé pasted into a markdown file, an API key in
+#      a config). Advisory by design: it warns rather than fails, because the
+#      false-positive rate on a job-search repo is inherently high.
+#
+# Honest limit: a pull request can edit this workflow itself, so these guards
+# catch accidents, not a determined author. Branch protection with required
+# checks is the real backstop — enable it on `main` before inviting anyone in.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  security-guards:
+    name: Security guards (gitignore, hooks, tracked files)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python tools/security_guards.py
+
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies if a manifest exists
+        run: |
+          if [ -f outputs/job-application-copilot/requirements.txt ]; then
+            pip install -r outputs/job-application-copilot/requirements.txt
+          fi
+          pip install jsonschema
+      - name: Run the regression suite
+        run: |
+          if [ -d outputs/job-application-copilot/tests ]; then
+            cd outputs/job-application-copilot
+            python -m unittest discover -s tests -t . -v
+          else
+            echo "::warning::No test directory found at outputs/job-application-copilot/tests"
+          fi
+
+  private-data-scan:
+    name: Private-data scan (advisory)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan tracked files for candidate data and secrets
+        run: |
+          # Advisory only: report and pass. Tune the patterns as the repo settles,
+          # and promote this to a hard failure once it runs clean for a few weeks.
+          hits=0
+          scan() {
+            if git grep -nIE "$1" -- ':!tools/security_guards.py' ':!.github/workflows/ci.yml' > /tmp/hits.txt 2>/dev/null; then
+              echo "::warning::possible $2:"
+              head -20 /tmp/hits.txt
+              hits=1
+            fi
+          }
+          scan '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' 'email address'
+          scan '(sk-[A-Za-z0-9]{20,}|AIza[A-Za-z0-9_-]{30,}|ghp_[A-Za-z0-9]{30,})' 'API key'
+          scan '\b(GPA|CGPA)\b[^a-zA-Z]{0,10}[0-9]\.[0-9]{1,2}' 'GPA value'
+          scan '\+852[ -]?[0-9]{4}[ -]?[0-9]{4}' 'phone number'
+          if [ "$hits" = "0" ]; then echo "private-data-scan: clean"; fi

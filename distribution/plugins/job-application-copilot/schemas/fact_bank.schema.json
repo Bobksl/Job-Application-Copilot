@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fact_bank.schema.json",
+  "title": "Career fact bank",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "candidate_id", "facts"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "candidate_id": {"type": "string", "minLength": 1, "maxLength": 100},
+    "facts": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/fact"}
+    }
+  },
+  "$defs": {
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fact_id", "category", "organization", "context", "claim", "skills",
+        "metrics", "evidence", "verification_status", "allowed_uses", "last_verified"
+      ],
+      "properties": {
+        "fact_id": {"type": "string", "pattern": "^FACT-[A-Z0-9-]+$"},
+        "category": {
+          "enum": ["employment", "project", "education", "activity", "skill", "award", "career_break"]
+        },
+        "organization": {"type": "string", "minLength": 1, "maxLength": 200},
+        "context": {"type": "string", "minLength": 1, "maxLength": 300},
+        "claim": {"type": "string", "minLength": 1, "maxLength": 1000},
+        "skills": {
+          "type": "array", "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 100}
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["label", "value", "unit", "verification_status"],
+            "properties": {
+              "label": {"type": "string", "minLength": 1, "maxLength": 100},
+              "value": {"type": ["string", "number", "null"]},
+              "unit": {"type": ["string", "null"], "maxLength": 50},
+              "verification_status": {"enum": ["verified", "unverified", "not_applicable"]}
+            }
+          }
+        },
+        "evidence": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["type", "reference"],
+            "properties": {
+              "type": {"enum": ["candidate_confirmation", "resume", "document", "version_history", "other"]},
+              "reference": {"type": "string", "minLength": 1, "maxLength": 500},
+              "note": {"type": "string", "maxLength": 500}
+            }
+          }
+        },
+        "verification_status": {"enum": ["verified", "unverified", "rejected"]},
+        "allowed_uses": {
+          "type": "array", "uniqueItems": true,
+          "items": {"enum": ["resume", "cover_letter", "email", "interview", "job_fit"]}
+        },
+        "last_verified": {"type": "string", "format": "date"}
+      }
+    }
+  }
+}

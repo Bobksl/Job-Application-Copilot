@@ -1,0 +1,4 @@
+interface:
+  display_name: "Application Pipeline"
+  short_description: "Run a copy-ready job application workflow"
+  default_prompt: "Use $application-pipeline to start a fact-grounded, draft-first job application case."

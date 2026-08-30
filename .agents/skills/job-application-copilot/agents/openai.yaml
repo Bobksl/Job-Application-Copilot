@@ -1,0 +1,4 @@
+interface:
+  display_name: "Job Application Copilot"
+  short_description: "Build fact-checked, copy-ready applications"
+  default_prompt: "Use $job-application-copilot to tailor my resume and cover letter to this job description."

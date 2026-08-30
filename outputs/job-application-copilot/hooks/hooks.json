@@ -1,0 +1,18 @@
+{
+  "description": "Block unapproved document writes, email sending, and application submission.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$env:PLUGIN_ROOT\\hooks\\pre_tool_use.py\"",
+            "timeout": 5,
+            "statusMessage": "Checking application approval policy"
+          }
+        ]
+      }
+    ]
+  }
+}

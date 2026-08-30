@@ -1,0 +1,4 @@
+interface:
+  display_name: "Application Writer"
+  short_description: "Draft copy-ready application materials"
+  default_prompt: "Use $application-writer to prepare copy-ready resume redlines and a tailored cover letter."
