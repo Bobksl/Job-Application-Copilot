@@ -1,0 +1,35 @@
+[
+  {
+    "schema_version": "1.0",
+    "case_id": "CASE-EXAMPLE-ALPHA-20260831",
+    "status": "rejected",
+    "predicted_fit_score": 84,
+    "predicted_at": "2026-08-01",
+    "eligibility_gate": "PASS",
+    "language_gate": "PASS",
+    "stages": [
+      {"stage": "applied", "date": "2026-08-02"},
+      {"stage": "rejected", "date": "2026-08-20"}
+    ],
+    "recorded_gaps": ["No direct sector experience"],
+    "channel": "portal",
+    "follow_ups": [],
+    "resolved_at": "2026-08-20"
+  },
+  {
+    "schema_version": "1.0",
+    "case_id": "CASE-EXAMPLE-BETA-20260831",
+    "status": "drafted",
+    "predicted_fit_score": 61,
+    "predicted_at": "2026-08-15",
+    "eligibility_gate": "UNVERIFIED",
+    "language_gate": "FLAG",
+    "stages": [],
+    "recorded_gaps": [
+      "No direct sector experience",
+      "Language level needs confirmation"
+    ],
+    "deadline": "2099-12-31",
+    "follow_ups": []
+  }
+]

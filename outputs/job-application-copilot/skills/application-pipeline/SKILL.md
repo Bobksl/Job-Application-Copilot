@@ -21,12 +21,14 @@ Own case state, user checkpoints, and optional Gmail-draft creation. Keep resear
 
 1. Use `$career-fact-bank`; obtain explicit verification for every fact used.
 2. Use `$job-fit-diagnostic`; obtain approval for the selected resume track.
-3. Use `$application-writer`; show all proposed resume changes in one consolidated table with fact IDs.
-4. Accept one approval and one feedback round for the table, then return final copy-ready bullets.
-5. Use `$application-quality-gate`; stop on any factual, placeholder, or tone failure.
-6. Draft the cover letter in stages, then return one combined copy-ready draft after selection.
-7. Ask the candidate to paste approved text into existing templates and confirm one-page fit manually.
-8. If email is the application route, draft it, approve it, and optionally create an unsent Gmail draft only.
+3. When the diagnostic produces a fit score, persist its score, run date, and recorded gaps to the application case as `fit_score`, `predicted_at`, and `recorded_gaps`, then immediately run `scripts/record_outcome.py init --case <path>`. Refuse initialization rather than inventing any missing diagnostic evidence.
+4. Use `$application-writer`; show all proposed resume changes in one consolidated table with fact IDs.
+5. Accept one approval and one feedback round for the table, then return final copy-ready bullets.
+6. Use `$application-quality-gate`; stop on any factual, placeholder, or tone failure.
+7. Draft the cover letter in stages, then return one combined copy-ready draft after selection.
+8. Ask the candidate to paste approved text into existing templates and confirm one-page fit manually.
+9. If email is the application route, draft it, approve it, and optionally create an unsent Gmail draft only.
+10. After the candidate reports an external submission or later outcome, record only the supplied event with `record_outcome.py stage`, `followup`, or `resolve`; never infer an outcome or replace an earlier stage.
 
 ## Approval Semantics
 

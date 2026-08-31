@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "application_outcome.schema.json",
+  "title": "Application outcome record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "case_id",
+    "status",
+    "predicted_fit_score",
+    "predicted_at",
+    "eligibility_gate",
+    "language_gate",
+    "stages",
+    "recorded_gaps",
+    "follow_ups"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "case_id": {"type": "string", "pattern": "^CASE-[A-Z0-9-]+$"},
+    "status": {
+      "enum": [
+        "drafted",
+        "applied",
+        "interview",
+        "offer",
+        "hired",
+        "rejected",
+        "no_response",
+        "offer_declined",
+        "withdrawn"
+      ]
+    },
+    "predicted_fit_score": {"type": "number", "minimum": 0, "maximum": 100},
+    "predicted_at": {"type": "string", "format": "date"},
+    "eligibility_gate": {"enum": ["PASS", "FAIL", "UNVERIFIED"]},
+    "language_gate": {"enum": ["PASS", "FLAG", "FAIL"]},
+    "stages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["stage", "date"],
+        "properties": {
+          "stage": {"type": "string", "minLength": 1, "maxLength": 200},
+          "date": {"type": "string", "format": "date"},
+          "notes": {"type": "string", "minLength": 1, "maxLength": 5000}
+        }
+      }
+    },
+    "recorded_gaps": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1, "maxLength": 2000}
+    },
+    "deadline": {"type": "string", "format": "date"},
+    "channel": {"enum": ["portal", "email", "referral", "other"]},
+    "follow_ups": {
+      "type": "array",
+      "items": {"type": "string", "format": "date"}
+    },
+    "resolved_at": {"type": "string", "format": "date"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": ["hired", "rejected", "no_response", "offer_declined", "withdrawn"]
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {"required": ["resolved_at"]},
+      "else": {"not": {"required": ["resolved_at"]}}
+    }
+  ]
+}

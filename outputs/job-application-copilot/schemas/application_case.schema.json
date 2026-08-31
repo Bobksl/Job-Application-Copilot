@@ -43,6 +43,13 @@
     },
     "selected_track": {"type": ["string", "null"], "enum": ["quant_cv", "fundamental_resume", null]},
     "fit_score": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+    "predicted_at": {"type": "string", "format": "date"},
+    "recorded_gaps": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1, "maxLength": 2000}
+    },
+    "deadline": {"type": "string", "format": "date"},
+    "channel": {"enum": ["portal", "email", "referral", "other"]},
     "eligibility_gate": {"enum": ["PASS", "FAIL", "UNVERIFIED"]},
     "eligibility_note": {"type": "string", "minLength": 1, "maxLength": 5000},
     "language_gate": {"enum": ["PASS", "FLAG", "FAIL"]},
