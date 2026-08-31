@@ -68,6 +68,29 @@ class RecordOutcomeTests(unittest.TestCase):
         )
         self.assertEqual(outcome["deadline"], "2026-09-30")
         self.assertEqual(outcome["channel"], "portal")
+        self.assertEqual(outcome["provenance"], "recorded")
+
+    def test_init_rejects_backfilled_without_note(self):
+        result = self.run_recorder(
+            "init", "--case", str(self.case_path), "--provenance", "backfilled"
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("backfill note", result.stderr.lower())
+        self.assertFalse(self.outcome_path.exists())
+
+    def test_init_records_backfill_provenance_and_note(self):
+        result = self.run_recorder(
+            "init", "--case", str(self.case_path),
+            "--provenance", "backfilled",
+            "--backfill-note", "Reconstructed from contemporaneous diagnostic.md.",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        outcome = json.loads(self.outcome_path.read_text(encoding="utf-8"))
+        self.assertEqual(outcome["provenance"], "backfilled")
+        self.assertEqual(
+            outcome["backfill_note"],
+            "Reconstructed from contemporaneous diagnostic.md.",
+        )
 
     def test_init_refuses_missing_diagnostic_evidence(self):
         case = json.loads(self.case_path.read_text(encoding="utf-8"))
@@ -136,6 +159,28 @@ class RecordOutcomeTests(unittest.TestCase):
         )
         self.assertEqual(outcome["status"], "interview")
 
+    def test_appending_an_earlier_stage_preserves_furthest_status_and_history(self):
+        self.assertEqual(
+            self.run_recorder("init", "--case", str(self.case_path)).returncode, 0
+        )
+        for stage, event_date in (
+            ("applied", "2026-09-01"),
+            ("phone_screen", "2026-09-10"),
+            ("applied", "2026-09-02"),
+        ):
+            result = self.run_recorder(
+                "stage", "--case-id", "CASE-EXAMPLE-ANALYST-20260831",
+                "--stage", stage, "--date", event_date,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+        outcome = json.loads(self.outcome_path.read_text(encoding="utf-8"))
+        self.assertEqual(outcome["status"], "interview")
+        self.assertEqual(
+            [event["stage"] for event in outcome["stages"]],
+            ["applied", "phone_screen", "applied"],
+        )
+
     def test_resolve_refuses_non_final_status(self):
         self.assertEqual(
             self.run_recorder("init", "--case", str(self.case_path)).returncode, 0
@@ -167,10 +212,22 @@ class RecordOutcomeTests(unittest.TestCase):
         self.assertEqual(
             self.run_recorder("init", "--case", str(self.case_path)).returncode, 0
         )
-        listed = self.run_recorder("list")
+        listed = self.run_recorder("list", "--open", "--quiet-days", "10")
         self.assertEqual(listed.returncode, 0, listed.stderr)
         self.assertIn("CASE-EXAMPLE-ANALYST-20260831", listed.stdout)
         self.assertIn("DEADLINE_PASSED", listed.stdout)
+        self.assertNotIn("quiet_days=", listed.stdout)
+
+    def test_drafted_case_without_deadline_is_excluded_from_quiet_open_list(self):
+        case = json.loads(self.case_path.read_text(encoding="utf-8"))
+        case.pop("deadline", None)
+        self.case_path.write_text(json.dumps(case, indent=2) + "\n", encoding="utf-8")
+        self.assertEqual(
+            self.run_recorder("init", "--case", str(self.case_path)).returncode, 0
+        )
+        listed = self.run_recorder("list", "--open", "--quiet-days", "10")
+        self.assertEqual(listed.returncode, 0, listed.stderr)
+        self.assertNotIn("CASE-EXAMPLE-ANALYST-20260831", listed.stdout)
 
     def test_legacy_no_response_reads_as_final_and_writes_canonical_status(self):
         self.assertEqual(

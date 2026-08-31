@@ -36,6 +36,11 @@
     "predicted_at": {"type": "string", "format": "date"},
     "eligibility_gate": {"enum": ["PASS", "FAIL", "UNVERIFIED"]},
     "language_gate": {"enum": ["PASS", "FLAG", "FAIL"]},
+    "provenance": {
+      "enum": ["recorded", "backfilled"],
+      "default": "recorded"
+    },
+    "backfill_note": {"type": "string", "minLength": 1, "maxLength": 5000},
     "stages": {
       "type": "array",
       "items": {
@@ -73,6 +78,13 @@
       },
       "then": {"required": ["resolved_at"]},
       "else": {"not": {"required": ["resolved_at"]}}
+    },
+    {
+      "if": {
+        "properties": {"provenance": {"const": "backfilled"}},
+        "required": ["provenance"]
+      },
+      "then": {"required": ["backfill_note"]}
     }
   ]
 }

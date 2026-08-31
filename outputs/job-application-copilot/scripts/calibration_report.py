@@ -31,20 +31,32 @@ def read_outcomes(data_dir: Path) -> list[dict]:
 
 def print_report(records: list[dict]) -> None:
     status_counts = Counter(record["status"] for record in records)
-    resolved_count = sum(status_counts[status] for status in FINAL_STATUSES)
+    resolved_records = [record for record in records if record["status"] in FINAL_STATUSES]
+    resolved_count = len(resolved_records)
+    resolved_provenance = Counter(record["provenance"] for record in resolved_records)
 
     print("COUNT BY STATUS")
     for status in STATUS_ORDER:
         print(f"{status}: {status_counts[status]}")
 
     print("\nPREDICTED FIT SCORE AGAINST OUTCOME")
-    if not records:
-        print("No outcome records.")
-    for record in sorted(records, key=lambda item: item["case_id"]):
-        print(
-            f"{record['case_id']}: score={record['predicted_fit_score']} "
-            f"outcome={record['status']}"
+    provenance_headings = (
+        ("recorded", "RECORDED BEFORE OUTCOME KNOWN"),
+        ("backfilled", "BACKFILLED AFTER OUTCOME KNOWN"),
+    )
+    for provenance, heading in provenance_headings:
+        population = sorted(
+            (record for record in records if record["provenance"] == provenance),
+            key=lambda item: item["case_id"],
         )
+        print(f"\n{heading} ({len(population)})")
+        if not population:
+            print("No outcome records.")
+        for record in population:
+            print(
+                f"{record['case_id']}: score={record['predicted_fit_score']} "
+                f"outcome={record['status']}"
+            )
 
     print("\nGATE VERDICTS AGAINST OUTCOMES")
     if not records:
@@ -64,6 +76,11 @@ def print_report(records: list[dict]) -> None:
         print(f"{count} - {gap}")
 
     print("\nSAMPLE ASSESSMENT")
+    print(
+        f"Resolved cases: {resolved_count} total "
+        f"(recorded={resolved_provenance['recorded']}, "
+        f"backfilled={resolved_provenance['backfilled']})."
+    )
     if resolved_count < 5:
         print("Fewer than 5 resolved cases: no conclusion is supportable.")
     else:

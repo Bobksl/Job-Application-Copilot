@@ -18,6 +18,12 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "schemas" / "application_outcome.schema.json"
 FINAL_STATUSES = {"hired", "rejected", "no_response", "offer_declined", "withdrawn"}
 OPEN_STATUSES = {"drafted", "applied", "interview", "offer"}
+OPEN_STATUS_RANK = {
+    "drafted": 0,
+    "applied": 1,
+    "interview": 2,
+    "offer": 3,
+}
 LEGACY_STATUSES = {"no response": "no_response", "offer declined": "offer_declined"}
 
 
@@ -40,6 +46,7 @@ def validate_record(record: dict) -> None:
 def load_record(path: Path) -> dict:
     record = json.loads(path.read_text(encoding="utf-8"))
     record["status"] = normalize_status(record.get("status", ""))
+    record.setdefault("provenance", "recorded")
     validate_record(record)
     return record
 
@@ -87,7 +94,11 @@ def require_open(record: dict) -> None:
         raise ValueError(f"{record['case_id']} is already resolved")
 
 
-def init_outcome(case_path: Path) -> Path:
+def init_outcome(
+    case_path: Path,
+    provenance: str = "recorded",
+    backfill_note: str | None = None,
+) -> Path:
     case_path = case_path.resolve()
     case = json.loads(case_path.read_text(encoding="utf-8"))
     outcome_path = outcome_path_for_case(case_path)
@@ -102,6 +113,8 @@ def init_outcome(case_path: Path) -> Path:
     ]
     if missing:
         raise ValueError(f"application case is missing diagnostic evidence: {', '.join(missing)}")
+    if provenance == "backfilled" and not (backfill_note and backfill_note.strip()):
+        raise ValueError("backfilled provenance requires a backfill note")
 
     record = {
         "schema_version": "1.0",
@@ -111,6 +124,7 @@ def init_outcome(case_path: Path) -> Path:
         "predicted_at": case["predicted_at"],
         "eligibility_gate": case["eligibility_gate"],
         "language_gate": case["language_gate"],
+        "provenance": provenance,
         "stages": [],
         "recorded_gaps": case["recorded_gaps"],
         "follow_ups": [],
@@ -118,6 +132,8 @@ def init_outcome(case_path: Path) -> Path:
     for optional_field in ("deadline", "channel"):
         if optional_field in case:
             record[optional_field] = case[optional_field]
+    if provenance == "backfilled":
+        record["backfill_note"] = backfill_note
     atomic_write(outcome_path, record)
     return outcome_path
 
@@ -138,7 +154,9 @@ def append_stage(path: Path, stage: str, event_date: date, notes: str | None) ->
     if notes is not None:
         event["notes"] = notes
     record["stages"].append(event)
-    record["status"] = stage_status(stage)
+    new_status = stage_status(stage)
+    if OPEN_STATUS_RANK[new_status] > OPEN_STATUS_RANK[record["status"]]:
+        record["status"] = new_status
     atomic_write(path, record)
 
 
@@ -182,10 +200,15 @@ def list_outcomes(data_dir: Path, open_only: bool, quiet_days: int | None) -> No
         overdue = "deadline" in record and date.fromisoformat(record["deadline"]) < today
         quiet_for = (today - activity_date(record)).days
         if quiet_days is not None:
-            if not is_open or record["status"] == "drafted" or quiet_for < quiet_days:
+            if not is_open:
+                continue
+            if record["status"] == "drafted":
+                if not overdue:
+                    continue
+            elif quiet_for < quiet_days:
                 continue
         fields = [record["case_id"], f"status={record['status']}"]
-        if quiet_days is not None:
+        if quiet_days is not None and record["status"] != "drafted":
             fields.append(f"quiet_days={quiet_for}")
         if overdue:
             fields.extend((f"deadline={record['deadline']}", "DEADLINE_PASSED"))
@@ -198,6 +221,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     init_parser = subparsers.add_parser("init")
     init_parser.add_argument("--case", type=Path, required=True)
+    init_parser.add_argument(
+        "--provenance", choices=("recorded", "backfilled"), default="recorded"
+    )
+    init_parser.add_argument("--backfill-note")
 
     stage_parser = subparsers.add_parser("stage")
     stage_parser.add_argument("--case-id", required=True)
@@ -228,7 +255,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         if args.command == "init":
-            path = init_outcome(args.case)
+            path = init_outcome(args.case, args.provenance, args.backfill_note)
             print(json.dumps({"case_id": load_record(path)["case_id"], "outcome_path": str(path)}))
         else:
             if args.command == "list":
