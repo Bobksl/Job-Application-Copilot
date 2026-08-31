@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "quality_gate.py"
 CASE_FIXTURE = ROOT / "tests" / "fixtures" / "application_case.json"
+DEFAULT_APPLICATION_CASE = object()
 
 
 def approval_hash(change_set):
@@ -59,13 +60,17 @@ class QualityGateTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.directory, ignore_errors=True)
 
-    def run_gate(self, change_set, mode="prewrite", application_case=None):
+    def run_gate(
+        self, change_set, mode="prewrite", application_case=DEFAULT_APPLICATION_CASE
+    ):
         fact_path = write_json(self.directory, "facts.json", self.fact_bank)
         change_path = write_json(self.directory, "change.json", change_set)
         command = [
             sys.executable, str(SCRIPT), mode, "--fact-bank", str(fact_path),
             "--change-set", str(change_path),
         ]
+        if application_case is DEFAULT_APPLICATION_CASE:
+            application_case = self.application_case
         if application_case is not None:
             case_path = write_json(self.directory, "application_case.json", application_case)
             command.extend(["--application-case", str(case_path)])
@@ -104,6 +109,51 @@ class QualityGateTests(unittest.TestCase):
     def test_approved_grounded_change_passes(self):
         result = self.run_gate(self.valid_change_set())
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_prewrite_requires_application_case(self):
+        result = self.run_gate(self.valid_change_set(), application_case=None)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("--application-case", result.stderr)
+
+    def test_final_requires_application_case(self):
+        change = self.valid_change_set()
+        change["status"] = "final"
+        change["qa"]["layout"] = "not_applicable"
+        change["approvals"][0]["approved_content_sha256"] = approval_hash(change)
+        result = self.run_gate(change, mode="final", application_case=None)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("--application-case", result.stderr)
+
+    def test_mismatched_application_case_is_blocked(self):
+        application_case = deepcopy(self.application_case)
+        application_case["case_id"] = "CASE-DIFFERENT-001"
+        result = self.run_gate(
+            self.valid_change_set(), application_case=application_case
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("does not match", result.stderr)
+
+    def test_failed_eligibility_gate_without_note_reports_missing_note(self):
+        application_case = deepcopy(self.application_case)
+        application_case["eligibility_gate"] = "FAIL"
+        application_case.pop("eligibility_note")
+        result = self.run_gate(
+            self.valid_change_set(), application_case=application_case
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("eligibility_note is missing", result.stderr)
+        self.assertIn("verbatim posting quote and source are required", result.stderr)
+        self.assertNotIn("a vetoed role cannot advance", result.stderr)
+
+    def test_application_case_missing_eligibility_gate_fails_schema_validation(self):
+        application_case = deepcopy(self.application_case)
+        application_case.pop("eligibility_gate")
+        result = self.run_gate(
+            self.valid_change_set(), application_case=application_case
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Schema validation failed", result.stderr)
+        self.assertIn("eligibility_gate", result.stderr)
 
     def test_unverified_fact_is_blocked(self):
         self.fact_bank["facts"][0]["verification_status"] = "unverified"

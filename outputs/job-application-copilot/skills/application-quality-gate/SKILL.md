@@ -29,7 +29,7 @@ Only a clean pass may proceed to copy-ready handoff or Gmail authorization.
 For Gmail only, the main agent saves the final tool arguments as JSON, then runs:
 
 ```text
-python <plugin-root>/scripts/authorize_action.py --action gmail_draft --payload <payload> --change-set <changes> --fact-bank <facts> --data-dir <plugin-data>
+python <plugin-root>/scripts/authorize_action.py --action gmail_draft --payload <payload> --change-set <changes> --fact-bank <facts> --application-case <case> --data-dir <plugin-data>
 ```
 
 Authorization expires within ten minutes, matches the payload hash exactly, and is consumed once. Any payload change requires a new quality pass and authorization. Never authorize `google_doc_update`.

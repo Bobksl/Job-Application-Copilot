@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "authorize_action.py"
+CASE_FIXTURE = ROOT / "tests" / "fixtures" / "application_case.json"
 
 
 def approval_hash(change_set):
@@ -58,6 +59,8 @@ class AuthorizeActionTests(unittest.TestCase):
             "change_set_id": self.change["change_set_id"],
             "approved_content_sha256": approval_hash(self.change),
         }]
+        self.application_case = json.loads(CASE_FIXTURE.read_text(encoding="utf-8"))
+        self.application_case["case_id"] = self.change["case_id"]
         self.payload = {"document_id": "doc-123", "requests": [{"insertText": {}}],
                         "write_control": {"requiredRevisionId": "rev-1"}}
 
@@ -75,6 +78,7 @@ class AuthorizeActionTests(unittest.TestCase):
             "--payload", str(self.write("payload.json", self.payload)),
             "--change-set", str(self.write("change.json", self.change)),
             "--fact-bank", str(self.write("facts.json", self.facts)),
+            "--application-case", str(self.write("case.json", self.application_case)),
             "--data-dir", str(self.directory / "data"), "--ttl-seconds", "120"
         ], capture_output=True, text=True, check=False)
 
@@ -118,6 +122,7 @@ class AuthorizeActionTests(unittest.TestCase):
             "--payload", str(self.write("payload.json", self.payload)),
             "--change-set", str(self.write("change.json", self.change)),
             "--fact-bank", str(self.write("facts.json", self.facts)),
+            "--application-case", str(self.write("case.json", self.application_case)),
             "--data-dir", str(blocked_data_path), "--ttl-seconds", "120"
         ], capture_output=True, text=True, check=False)
         self.assertNotEqual(result.returncode, 0)

@@ -6,8 +6,8 @@
   "additionalProperties": false,
   "required": [
     "schema_version", "case_id", "company", "role", "created_at", "status", "jd",
-    "documents", "selected_track", "fit_score", "score_weights", "research_sources",
-    "change_sets", "approvals"
+    "documents", "selected_track", "fit_score", "eligibility_gate", "language_gate",
+    "score_weights", "research_sources", "change_sets", "approvals"
   ],
   "properties": {
     "schema_version": {"const": "1.0"},

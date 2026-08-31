@@ -72,6 +72,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--payload", type=Path, required=True)
     parser.add_argument("--change-set", type=Path, required=True)
     parser.add_argument("--fact-bank", type=Path, required=True)
+    parser.add_argument("--application-case", type=Path, required=True)
     parser.add_argument("--data-dir", type=Path, required=True)
     parser.add_argument("--ttl-seconds", type=int, default=300)
     args = parser.parse_args(argv)
@@ -82,7 +83,8 @@ def main(argv: list[str] | None = None) -> int:
         payload = load_json(args.payload)
         change_set = load_json(args.change_set)
         fact_bank = load_json(args.fact_bank)
-        validate_prewrite(fact_bank, change_set)
+        application_case = load_json(args.application_case)
+        validate_prewrite(fact_bank, change_set, application_case)
         validate_target(args.action, payload, change_set)
         now = datetime.now(timezone.utc)
         authorization = {

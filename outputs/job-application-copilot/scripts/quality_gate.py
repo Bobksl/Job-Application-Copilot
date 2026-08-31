@@ -101,12 +101,11 @@ def validate_case_gates(application_case: dict, change_set: dict) -> None:
 
 
 def validate_prewrite(
-    fact_bank: dict, change_set: dict, application_case: dict | None = None
+    fact_bank: dict, change_set: dict, application_case: dict
 ) -> None:
     validate_schema(fact_bank, "fact_bank.schema.json")
     validate_schema(change_set, "change_set.schema.json")
-    if application_case is not None:
-        validate_case_gates(application_case, change_set)
+    validate_case_gates(application_case, change_set)
 
     if change_set["status"] not in {"approved", "applied", "final"}:
         raise GateError("Change set is not approved for writing.")
@@ -154,7 +153,7 @@ def validate_prewrite(
 
 
 def validate_final(
-    fact_bank: dict, change_set: dict, application_case: dict | None = None
+    fact_bank: dict, change_set: dict, application_case: dict
 ) -> None:
     validate_prewrite(fact_bank, change_set, application_case)
     if change_set["status"] != "final":
@@ -179,12 +178,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("mode", choices=["prewrite", "final"])
     parser.add_argument("--fact-bank", required=True, type=Path)
     parser.add_argument("--change-set", required=True, type=Path)
-    parser.add_argument("--application-case", type=Path)
+    parser.add_argument("--application-case", required=True, type=Path)
     args = parser.parse_args(argv)
     try:
         facts = load_json(args.fact_bank)
         changes = load_json(args.change_set)
-        application_case = load_json(args.application_case) if args.application_case else None
+        application_case = load_json(args.application_case)
         (validate_prewrite if args.mode == "prewrite" else validate_final)(
             facts, changes, application_case
         )

@@ -76,6 +76,10 @@ def main(argv: list[str] | None = None) -> int:
             },
             "selected_track": None,
             "fit_score": None,
+            "eligibility_gate": "UNVERIFIED",
+            "eligibility_note": "Eligibility gate has not been evaluated at intake.",
+            "language_gate": "FLAG",
+            "language_note": "Language gate has not been evaluated at intake.",
             "score_weights": {
                 "core_responsibilities": 35,
                 "hard_skills": 30,
