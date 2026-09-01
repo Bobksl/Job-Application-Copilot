@@ -49,6 +49,20 @@ def filename_from_reference(value: object) -> str | None:
     return filename
 
 
+def filename_from_document_id(value: object) -> str | None:
+    filename = filename_from_reference(value)
+    if filename is None or not isinstance(value, str):
+        return None
+    reference = value.strip()
+    is_path = "/" in reference or "\\" in reference
+    has_extension = (
+        "." in filename
+        and not filename.startswith(".")
+        and not filename.endswith(".")
+    )
+    return filename if is_path or has_extension else None
+
+
 def document_filenames(case: dict) -> list[str]:
     documents = case.get("documents", {})
     if not isinstance(documents, dict):
@@ -59,9 +73,9 @@ def document_filenames(case: dict) -> list[str]:
         if not isinstance(record, dict):
             continue
         reference = record.get("filename")
-        if reference is None:
-            reference = record.get("document_id")
         filename = filename_from_reference(reference)
+        if filename is None:
+            filename = filename_from_document_id(record.get("document_id"))
         if filename is not None:
             filenames.add(filename)
     return sorted(filenames)
