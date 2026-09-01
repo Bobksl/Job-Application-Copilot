@@ -1,0 +1,25 @@
+{
+  "case_id": "CASE-EXAMPLE-ANALYST-20260831",
+  "company": "Example Corp",
+  "role": "Analyst",
+  "deadline": "2026-09-30",
+  "channel": "portal",
+  "jd": {
+    "source_type": "url",
+    "source": "https://careers.example.test/analyst"
+  },
+  "documents": {
+    "quant_cv": {
+      "document_id": "tests/fixtures/projection_document.txt",
+      "url": "https://docs.example.test/never-export-this"
+    },
+    "fundamental_resume": {
+      "document_id": "C:\\private\\candidate-fundamental.pdf",
+      "url": null
+    },
+    "cover_letter": {
+      "document_id": null,
+      "url": null
+    }
+  }
+}

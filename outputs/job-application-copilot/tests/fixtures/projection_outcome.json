@@ -1,0 +1,27 @@
+{
+  "case_id": "CASE-EXAMPLE-ANALYST-20260831",
+  "status": "rejected",
+  "predicted_fit_score": 72,
+  "eligibility_gate": "UNVERIFIED",
+  "language_gate": "FLAG",
+  "provenance": "recorded",
+  "deadline": "2026-09-30",
+  "channel": "portal",
+  "resolved_at": "2026-10-15",
+  "stages": [
+    {
+      "stage": "applied",
+      "date": "2026-09-02",
+      "notes": "Submitted through the portal."
+    },
+    {
+      "stage": "phone_screen",
+      "date": "2026-09-15",
+      "notes": "Recruiter call."
+    },
+    {
+      "stage": "rejected",
+      "date": "2026-10-15"
+    }
+  ]
+}

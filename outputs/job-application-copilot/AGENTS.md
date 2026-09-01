@@ -11,6 +11,12 @@ These rules apply to every skill, agent, and script in this plugin.
 - Return copy-ready text and one consolidated resume change table; do not rewrite those documents directly.
 - Preserve factual traceability, concise wording, natural ATS use, and one-page awareness in every proposal.
 
+## Local authority and Notion projection
+
+- Local case folders, the local fact bank, and local outcome records are the system of record.
+- Notion is a rebuildable, one-way projection of local state.
+- Never read or sync Notion content back into a case, fact bank, or outcome record.
+
 ## Ask first
 
 - Remove existing resume content to make space.
